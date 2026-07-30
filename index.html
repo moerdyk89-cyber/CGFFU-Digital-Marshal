@@ -189,6 +189,7 @@
       <div class="chip">Sector <b>C</b></div>
       <div class="chip">Session <b>2</b></div>
       <div class="chip code">Card code <b id="sessionCode">–</b></div>
+      <div class="chip" id="queueBadge" style="display:none;border-color:#E8622C;color:#E8622C;"></div>
     </div>
   </header>
 
@@ -256,6 +257,56 @@
 <script>
 const sessionCode = Array.from({length:5}, () => "23456789ACDEFGHJKMNPQRTUVWXY"[Math.floor(Math.random()*28)]).join('');
 document.getElementById('sessionCode').textContent = sessionCode;
+
+  // Remember the setup fields on this phone, so they survive closing the tab
+['anglerInput','beatInput','sectorInput','sessionInput'].forEach(id => {
+  const el = document.getElementById(id);
+  const saved = localStorage.getItem(id);
+  if(saved) el.value = saved;
+  el.addEventListener('input', () => localStorage.setItem(id, el.value));
+});
+
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyj90jC-SQ-GGKEyNoM2js0ZMl1UutKZvH3q6y-Y3W7cecV8JTDltSDFHUHF6m0QoFT/exec';
+const QUEUE_KEY = 'cgffu_pending_catches';
+
+function getQueue(){ return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); }
+function saveQueue(q){ localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); }
+
+async function sendCatch(payload){
+  try{
+    await fetch(WEBAPP_URL, { method:'POST', body: JSON.stringify(payload) });
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
+async function trySendQueue(){
+  let q = getQueue();
+  if(q.length === 0) return;
+  const remaining = [];
+  for(const item of q){
+    const ok = await sendCatch(item);
+    if(!ok) remaining.push(item);
+  }
+  saveQueue(remaining);
+  updateQueueBadge();
+}
+
+function updateQueueBadge(){
+  const n = getQueue().length;
+  const badge = document.getElementById('queueBadge');
+  if(!badge) return;
+  if(n > 0){
+    badge.style.display = 'inline-flex';
+    badge.textContent = n + ' waiting to send';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+window.addEventListener('online', trySendQueue);
+setInterval(trySendQueue, 15000);
 
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
@@ -367,7 +418,7 @@ document.getElementById('retakeBtn').addEventListener('click', () => {
   pendingCapture = null;
 });
 
-document.getElementById('submitBtn').addEventListener('click', () => {
+document.getElementById('submitBtn').addEventListener('click', async () => {
   if(!pendingCapture) return;
 
   const payload = {
@@ -383,6 +434,21 @@ document.getElementById('submitBtn').addEventListener('click', () => {
     session_code: sessionCode,
     photo: pendingCapture.dataUrl
   };
+
+  const ok = navigator.onLine ? await sendCatch(payload) : false;
+  if(!ok){
+    const q = getQueue();
+    q.push(payload);
+    saveQueue(q);
+    updateQueueBadge();
+  }
+
+  catches.unshift(pendingCapture);
+  renderLog();
+  reviewCard.style.display = 'none';
+  pendingCapture = null;
+  speciesSel.value = '';
+});
 
   fetch('https://script.google.com/macros/s/AKfycbyj90jC-SQ-GGKEyNoM2js0ZMl1UutKZvH3q6y-Y3W7cecV8JTDltSDFHUHF6m0QoFT/exec', {
     method: 'POST',
@@ -413,6 +479,7 @@ function renderLog(){
     </div>
   `).join('');
 }
+  updateQueueBadge();
 </script>
 </body>
 </html>
