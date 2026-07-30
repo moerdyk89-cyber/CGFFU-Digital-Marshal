@@ -194,6 +194,20 @@
 
   <main>
     <div class="card">
+  <h2>Session setup</h2>
+  <label>Angler name</label>
+  <input type="text" id="anglerInput" placeholder="e.g. Luke Moerdyk" style="width:100%;padding:12px;border-radius:9px;background:rgba(239,234,224,0.06);border:1px solid var(--line);color:var(--sand);font-family:'Inter',sans-serif;font-size:15px;margin-bottom:14px;">
+
+  <label>Beat</label>
+  <input type="text" id="beatInput" placeholder="e.g. 7" style="width:100%;padding:12px;border-radius:9px;background:rgba(239,234,224,0.06);border:1px solid var(--line);color:var(--sand);font-family:'Inter',sans-serif;font-size:15px;margin-bottom:14px;">
+
+  <label>Sector</label>
+  <input type="text" id="sectorInput" placeholder="e.g. C" style="width:100%;padding:12px;border-radius:9px;background:rgba(239,234,224,0.06);border:1px solid var(--line);color:var(--sand);font-family:'Inter',sans-serif;font-size:15px;margin-bottom:14px;">
+
+  <label>Session</label>
+  <input type="text" id="sessionInput" placeholder="e.g. 2" style="width:100%;padding:12px;border-radius:9px;background:rgba(239,234,224,0.06);border:1px solid var(--line);color:var(--sand);font-family:'Inter',sans-serif;font-size:15px;">
+</div>
+    <div class="card">
       <h2>Capture</h2>
       <div class="viewfinder" id="viewfinder">
         <video id="video" autoplay playsinline muted style="display:none"></video>
@@ -358,10 +372,10 @@ document.getElementById('submitBtn').addEventListener('click', () => {
 
   const payload = {
     catch_id: crypto.randomUUID(),
-    angler_id: 'test-angler',
-    beat: 7,
-    sector: 'C',
-    session: 2,
+    angler_id: document.getElementById('anglerInput').value || 'unknown',
+    beat: document.getElementById('beatInput').value || '',
+    sector: document.getElementById('sectorInput').value || '',
+    session: document.getElementById('sessionInput').value || '',
     timestamp: pendingCapture.ts,
     lat: lastCoords ? lastCoords.lat : '',
     lon: lastCoords ? lastCoords.lon : '',
