@@ -355,6 +355,26 @@ document.getElementById('retakeBtn').addEventListener('click', () => {
 
 document.getElementById('submitBtn').addEventListener('click', () => {
   if(!pendingCapture) return;
+
+  const payload = {
+    catch_id: crypto.randomUUID(),
+    angler_id: 'test-angler',
+    beat: 7,
+    sector: 'C',
+    session: 2,
+    timestamp: pendingCapture.ts,
+    lat: lastCoords ? lastCoords.lat : '',
+    lon: lastCoords ? lastCoords.lon : '',
+    species: pendingCapture.species,
+    session_code: sessionCode,
+    photo: pendingCapture.dataUrl
+  };
+
+  fetch('https://script.google.com/macros/s/AKfycbyj90jC-SQ-GGKEyNoM2js0ZMl1UutKZvH3q6y-Y3W7cecV8JTDltSDFHUHF6m0QoFT/exec', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+
   catches.unshift(pendingCapture);
   renderLog();
   reviewCard.style.display = 'none';
