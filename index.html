@@ -450,18 +450,6 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
   speciesSel.value = '';
 });
 
-  fetch('https://script.google.com/macros/s/AKfycbyj90jC-SQ-GGKEyNoM2js0ZMl1UutKZvH3q6y-Y3W7cecV8JTDltSDFHUHF6m0QoFT/exec', {
-    method: 'POST',
-    body: JSON.stringify(payload)
-  });
-
-  catches.unshift(pendingCapture);
-  renderLog();
-  reviewCard.style.display = 'none';
-  pendingCapture = null;
-  speciesSel.value = '';
-});
-
 function renderLog(){
   logCount.textContent = `${catches.length} catch${catches.length===1?'':'es'}`;
   if(catches.length === 0){
