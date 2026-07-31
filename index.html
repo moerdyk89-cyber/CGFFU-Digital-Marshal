@@ -15,7 +15,6 @@
     --sand:#EFEAE0;
     --ink:#0D1A19;
     --line:rgba(239,234,224,0.14);
-    --ok:#5C8A5A;
   }
   *{box-sizing:border-box;}
   body{
@@ -29,8 +28,6 @@
     -webkit-font-smoothing:antialiased;
   }
   .wrap{max-width:460px;margin:0 auto;padding:0 0 40px;position:relative;}
-
-  /* --- contour signature background --- */
   .contours{position:fixed;inset:0;z-index:0;opacity:0.35;pointer-events:none;}
 
   header{
@@ -74,13 +71,29 @@
     margin:0 0 12px;
   }
 
+  .field, select.field{width:100%;padding:12px;border-radius:9px;background:rgba(239,234,224,0.06);border:1px solid var(--line);color:var(--sand);font-family:'Inter',sans-serif;font-size:15px;margin-bottom:14px;appearance:none;}
+  select.field{
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%23EFEAE0' stroke-width='1.6' fill='none'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 14px center;
+  }
+  .field:focus, select.field:focus{outline:2px solid var(--reed);outline-offset:1px;}
+
+  .mode-toggle{display:flex;gap:8px;margin-bottom:14px;}
+  .mode-btn{
+    flex:1;padding:10px;border-radius:9px;border:1px solid var(--line);
+    background:rgba(239,234,224,0.04);color:var(--sand);
+    font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;
+    letter-spacing:0.04em;cursor:pointer;text-transform:uppercase;
+  }
+  .mode-btn.active{background:var(--flag-orange);color:var(--ink);border-color:var(--flag-orange);}
+
   .viewfinder{
     position:relative;width:100%;aspect-ratio:4/3;
     border-radius:10px;overflow:hidden;background:#081F21;
     border:1px solid var(--line);
     display:flex;align-items:center;justify-content:center;
   }
-  .viewfinder video, .viewfinder canvas{width:100%;height:100%;object-fit:cover;display:block;}
+  .viewfinder video{width:100%;height:100%;object-fit:cover;display:block;}
   .viewfinder .placeholder{
     text-align:center;color:rgba(239,234,224,0.45);font-size:12.5px;
     font-family:'IBM Plex Mono',monospace;padding:0 30px;line-height:1.6;
@@ -90,6 +103,13 @@
   .corner.tr{top:10px;right:10px;border-top:2.5px solid;border-right:2.5px solid;}
   .corner.bl{bottom:10px;left:10px;border-bottom:2.5px solid;border-left:2.5px solid;}
   .corner.br{bottom:10px;right:10px;border-bottom:2.5px solid;border-right:2.5px solid;}
+  .rec-dot{
+    position:absolute;top:10px;left:50%;transform:translateX(-50%);
+    display:none;align-items:center;gap:6px;
+    background:rgba(13,26,25,0.75);border-radius:20px;padding:5px 11px;
+    font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--sand);
+  }
+  .rec-dot span{width:8px;height:8px;border-radius:50%;background:var(--flag-orange);display:inline-block;}
 
   .ref-note{
     display:flex;gap:8px;align-items:flex-start;
@@ -104,15 +124,6 @@
     text-transform:uppercase;letter-spacing:0.08em;color:rgba(239,234,224,0.55);
     margin-bottom:6px;
   }
-  select{
-    width:100%;padding:12px 12px;border-radius:9px;
-    background:rgba(239,234,224,0.06);border:1px solid var(--line);
-    color:var(--sand);font-family:'Inter',sans-serif;font-size:15px;
-    margin-bottom:14px;appearance:none;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%23EFEAE0' stroke-width='1.6' fill='none'/%3E%3C/svg%3E");
-    background-repeat:no-repeat;background-position:right 14px center;
-  }
-  select:focus{outline:2px solid var(--reed);outline-offset:1px;}
 
   button{
     font-family:'Oswald',sans-serif;font-weight:600;font-size:15px;
@@ -126,7 +137,7 @@
     background:var(--flag-orange);color:var(--ink);
     display:flex;align-items:center;justify-content:center;gap:8px;
   }
-  .btn-capture:disabled{opacity:0.5;cursor:not-allowed;}
+  .btn-capture:disabled{opacity:0.6;cursor:not-allowed;}
   .btn-ghost{
     background:transparent;border:1px solid var(--line);color:var(--sand);
     margin-top:8px;
@@ -134,7 +145,7 @@
   .btn-submit{background:var(--reed);color:var(--ink);}
 
   .stamp-preview{margin-top:12px;}
-  .stamp-preview img{width:100%;border-radius:10px;display:block;border:1px solid var(--line);}
+  .stamp-preview img, .stamp-preview video{width:100%;border-radius:10px;display:block;border:1px solid var(--line);}
 
   .log-item{
     display:flex;gap:12px;padding:12px 0;
@@ -195,36 +206,39 @@
 
   <main>
     <div class="card">
-  <h2>Session setup</h2>
-  <label>Angler name</label>
-  <input type="text" id="anglerInput" placeholder="e.g. Luke Moerdyk" style="width:100%;padding:12px;border-radius:9px;background:rgba(239,234,224,0.06);border:1px solid var(--line);color:var(--sand);font-family:'Inter',sans-serif;font-size:15px;margin-bottom:14px;">
+      <h2>Session setup</h2>
+      <label>Angler</label>
+      <select id="anglerSelect" class="field"></select>
+      <label>Beat</label>
+      <input type="text" id="beatInput" class="field" placeholder="e.g. 7">
+      <label>Sector</label>
+      <input type="text" id="sectorInput" class="field" placeholder="e.g. C">
+      <label>Session</label>
+      <input type="text" id="sessionInput" class="field" style="margin-bottom:0;" placeholder="e.g. 2">
+    </div>
 
-  <label>Beat</label>
-  <input type="text" id="beatInput" placeholder="e.g. 7" style="width:100%;padding:12px;border-radius:9px;background:rgba(239,234,224,0.06);border:1px solid var(--line);color:var(--sand);font-family:'Inter',sans-serif;font-size:15px;margin-bottom:14px;">
-
-  <label>Sector</label>
-  <input type="text" id="sectorInput" placeholder="e.g. C" style="width:100%;padding:12px;border-radius:9px;background:rgba(239,234,224,0.06);border:1px solid var(--line);color:var(--sand);font-family:'Inter',sans-serif;font-size:15px;margin-bottom:14px;">
-
-  <label>Session</label>
-  <input type="text" id="sessionInput" placeholder="e.g. 2" style="width:100%;padding:12px;border-radius:9px;background:rgba(239,234,224,0.06);border:1px solid var(--line);color:var(--sand);font-family:'Inter',sans-serif;font-size:15px;">
-</div>
     <div class="card">
       <h2>Capture</h2>
+      <div class="mode-toggle">
+        <button type="button" class="mode-btn" id="modePhotoBtn">Photo</button>
+        <button type="button" class="mode-btn" id="modeVideoBtn">Video (6s)</button>
+      </div>
+
       <div class="viewfinder" id="viewfinder">
         <video id="video" autoplay playsinline muted style="display:none"></video>
-        <canvas id="canvas" style="display:none"></canvas>
         <div class="placeholder" id="vfPlaceholder">Requesting camera…<br>place fish next to reference card, fully in frame</div>
+        <div class="rec-dot" id="recDot"><span></span>Recording</div>
         <div class="corner tl"></div><div class="corner tr"></div>
         <div class="corner bl"></div><div class="corner br"></div>
       </div>
 
       <div class="ref-note">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 9v4M12 16.5h.01M10.3 3.9L2.5 17.8a1.8 1.8 0 0 0 1.6 2.7h15.8a1.8 1.8 0 0 0 1.6-2.7L13.7 3.9a1.8 1.8 0 0 0-3.4 0Z" stroke="#E8622C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <div>Reference card must be in frame with fish and code readable. Gallery uploads are disabled — only live captures are accepted.</div>
+        <div>Reference card must be in frame with fish and code readable. For video, show the release too. Gallery uploads are disabled — only live captures are accepted.</div>
       </div>
 
       <label style="margin-top:14px;">Species</label>
-      <select id="species">
+      <select id="species" class="field">
         <option value="">Select species…</option>
         <option>Rainbow trout</option>
         <option>Brown trout</option>
@@ -234,15 +248,15 @@
         <option>Other / unlisted</option>
       </select>
 
-      <button class="btn-capture" id="captureBtn">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" stroke="#0D1A19" stroke-width="1.7"/><circle cx="12" cy="14" r="3.2" stroke="#0D1A19" stroke-width="1.7"/></svg>
-        Capture catch
-      </button>
+      <button class="btn-capture" id="captureBtn"></button>
     </div>
 
     <div class="card" id="reviewCard" style="display:none;">
       <h2>Review before submit</h2>
-      <div class="stamp-preview"><img id="stampImg" alt="Captured catch with stamp overlay"></div>
+      <div class="stamp-preview">
+        <img id="stampImg" alt="Captured catch with stamp overlay" style="display:none;">
+        <video id="stampVideo" controls playsinline style="display:none;"></video>
+      </div>
       <button class="btn-submit" id="submitBtn" style="margin-top:12px;">Submit to controller</button>
       <button class="btn-ghost" id="retakeBtn">Retake</button>
     </div>
@@ -258,20 +272,69 @@
 const sessionCode = Array.from({length:5}, () => "23456789ACDEFGHJKMNPQRTUVWXY"[Math.floor(Math.random()*28)]).join('');
 document.getElementById('sessionCode').textContent = sessionCode;
 
-  // Remember the setup fields on this phone, so they survive closing the tab
-['anglerInput','beatInput','sectorInput','sessionInput'].forEach(id => {
+// --- Angler list. Edit these names per event, or later swap this for a
+// fetch() call that pulls the day's field straight from the draw engine's
+// exported JSON — the rest of the app doesn't need to change either way. ---
+const ANGLER_NAMES = [
+  "Luke Moerdyk",
+  "Jeff Afrait",
+  "Add angler names here"
+];
+
+const anglerSelect = document.getElementById('anglerSelect');
+anglerSelect.innerHTML = '<option value="">Select angler…</option>' +
+  ANGLER_NAMES.map(n => `<option value="${n}">${n}</option>`).join('');
+
+// Remember the setup fields on this phone, so they survive closing the tab
+['anglerSelect','beatInput','sectorInput','sessionInput'].forEach(id => {
   const el = document.getElementById(id);
   const saved = localStorage.getItem(id);
   if(saved) el.value = saved;
   el.addEventListener('input', () => localStorage.setItem(id, el.value));
+  el.addEventListener('change', () => localStorage.setItem(id, el.value));
 });
 
 const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyj90jC-SQ-GGKEyNoM2js0ZMl1UutKZvH3q6y-Y3W7cecV8JTDltSDFHUHF6m0QoFT/exec';
-const QUEUE_KEY = 'cgffu_pending_catches';
 
-function getQueue(){ return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); }
-function saveQueue(q){ localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); }
+// --- Offline queue, stored in IndexedDB so it can hold larger video payloads ---
+const DB_NAME = 'cgffu_catch_queue';
+const STORE_NAME = 'pending';
 
+function openQueueDB(){
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = () => { req.result.createObjectStore(STORE_NAME, {keyPath:'catch_id'}); };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function queueAdd(payload){
+  const db = await openQueueDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).put(payload);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+async function queueGetAll(){
+  const db = await openQueueDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const req = tx.objectStore(STORE_NAME).getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function queueRemove(catchId){
+  const db = await openQueueDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).delete(catchId);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
 async function sendCatch(payload){
   try{
     await fetch(WEBAPP_URL, { method:'POST', body: JSON.stringify(payload) });
@@ -280,21 +343,17 @@ async function sendCatch(payload){
     return false;
   }
 }
-
 async function trySendQueue(){
-  let q = getQueue();
-  if(q.length === 0) return;
-  const remaining = [];
-  for(const item of q){
+  const all = await queueGetAll();
+  for(const item of all){
     const ok = await sendCatch(item);
-    if(!ok) remaining.push(item);
+    if(ok) await queueRemove(item.catch_id);
   }
-  saveQueue(remaining);
   updateQueueBadge();
 }
-
-function updateQueueBadge(){
-  const n = getQueue().length;
+async function updateQueueBadge(){
+  const all = await queueGetAll();
+  const n = all.length;
   const badge = document.getElementById('queueBadge');
   if(!badge) return;
   if(n > 0){
@@ -304,16 +363,17 @@ function updateQueueBadge(){
     badge.style.display = 'none';
   }
 }
-
 window.addEventListener('online', trySendQueue);
 setInterval(trySendQueue, 15000);
 
+// --- Camera ---
 const video = document.getElementById('video');
-const canvas = document.getElementById('canvas');
 const vfPlaceholder = document.getElementById('vfPlaceholder');
+const recDot = document.getElementById('recDot');
 const captureBtn = document.getElementById('captureBtn');
 const reviewCard = document.getElementById('reviewCard');
 const stampImg = document.getElementById('stampImg');
+const stampVideo = document.getElementById('stampVideo');
 const logList = document.getElementById('logList');
 const logCount = document.getElementById('logCount');
 const speciesSel = document.getElementById('species');
@@ -323,8 +383,6 @@ let lastCoords = null;
 let catches = [];
 let pendingCapture = null;
 
-// Try live camera first, fall back to a simulated viewfinder if permission
-// is unavailable (e.g. no camera in this environment, or blocked context).
 async function initCamera(){
   try{
     const stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}, audio:false});
@@ -348,38 +406,29 @@ function watchLocation(){
 }
 watchLocation();
 
-function drawSimulatedFrame(ctx, w, h){
-  const g = ctx.createLinearGradient(0,0,0,h);
-  g.addColorStop(0,'#164A4E'); g.addColorStop(1,'#0F3438');
-  ctx.fillStyle = g; ctx.fillRect(0,0,w,h);
-  ctx.strokeStyle = 'rgba(239,234,224,0.15)'; ctx.lineWidth = 1;
-  for(let i=0;i<5;i++){
-    ctx.beginPath();
-    ctx.moveTo(0, h*0.2 + i*20);
-    ctx.bezierCurveTo(w*0.3, h*0.15+i*20, w*0.6, h*0.3+i*20, w, h*0.22+i*20);
-    ctx.stroke();
-  }
-  ctx.fillStyle = 'rgba(239,234,224,0.5)';
-  ctx.font = '13px monospace';
-  ctx.fillText('simulated capture frame', 16, h-16);
+// --- Mode toggle: photo vs video ---
+let captureMode = localStorage.getItem('captureMode') || 'photo';
+const modePhotoBtn = document.getElementById('modePhotoBtn');
+const modeVideoBtn = document.getElementById('modeVideoBtn');
+const captureBtnPhotoHTML = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" stroke="#0D1A19" stroke-width="1.7"/><circle cx="12" cy="14" r="3.2" stroke="#0D1A19" stroke-width="1.7"/></svg> Capture photo';
+const captureBtnVideoHTML = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="7" stroke="#0D1A19" stroke-width="1.7"/><circle cx="12" cy="12" r="3" fill="#0D1A19"/></svg> Record catch (6s)';
+
+function setMode(mode){
+  captureMode = mode;
+  localStorage.setItem('captureMode', mode);
+  modePhotoBtn.classList.toggle('active', mode === 'photo');
+  modeVideoBtn.classList.toggle('active', mode === 'video');
+  captureBtn.innerHTML = mode === 'video' ? captureBtnVideoHTML : captureBtnPhotoHTML;
 }
+modePhotoBtn.addEventListener('click', () => setMode('photo'));
+modeVideoBtn.addEventListener('click', () => setMode('video'));
+setMode(captureMode);
 
-function stampAndStore(){
-  const w = 640, h = 480;
-  canvas.width = w; canvas.height = h;
-  const ctx = canvas.getContext('2d');
-
-  if(cameraReady && video.videoWidth){
-    ctx.drawImage(video, 0, 0, w, h);
-  } else {
-    drawSimulatedFrame(ctx, w, h);
-  }
-
-  // burn-in overlay: timestamp, GPS, session code — not just EXIF metadata
+// --- Shared drawing helpers ---
+function drawStampBar(ctx, w, h){
   const now = new Date();
   const ts = now.toLocaleString('en-ZA', {hour12:false});
   const coordStr = lastCoords ? `${lastCoords.lat.toFixed(5)}, ${lastCoords.lon.toFixed(5)}` : 'GPS unavailable';
-
   const barH = 54;
   ctx.fillStyle = 'rgba(13,26,25,0.72)';
   ctx.fillRect(0, h-barH, w, barH);
@@ -393,16 +442,136 @@ function stampAndStore(){
   ctx.fillStyle = '#E8622C';
   ctx.fillText('CARD ' + sessionCode, w-12, h-barH+30);
   ctx.textAlign = 'left';
+}
+function drawSimulatedFrame(ctx, w, h){
+  const g = ctx.createLinearGradient(0,0,0,h);
+  g.addColorStop(0,'#164A4E'); g.addColorStop(1,'#0F3438');
+  ctx.fillStyle = g; ctx.fillRect(0,0,w,h);
+  ctx.strokeStyle = 'rgba(239,234,224,0.15)'; ctx.lineWidth = 1;
+  const t = Date.now()/500;
+  for(let i=0;i<5;i++){
+    ctx.beginPath();
+    ctx.moveTo(0, h*0.2 + i*20 + Math.sin(t+i)*4);
+    ctx.bezierCurveTo(w*0.3, h*0.15+i*20, w*0.6, h*0.3+i*20, w, h*0.22+i*20);
+    ctx.stroke();
+  }
+  ctx.fillStyle = 'rgba(239,234,224,0.5)';
+  ctx.font = '13px monospace';
+  ctx.fillText('simulated capture frame', 16, h-70);
+}
 
+// --- Photo capture ---
+const photoCanvas = document.createElement('canvas');
+const photoCtx = photoCanvas.getContext('2d');
+
+function stampAndStorePhoto(){
+  const w = 640, h = 480;
+  photoCanvas.width = w; photoCanvas.height = h;
+  if(cameraReady && video.videoWidth){
+    photoCtx.drawImage(video, 0, 0, w, h);
+  } else {
+    drawSimulatedFrame(photoCtx, w, h);
+  }
+  drawStampBar(photoCtx, w, h);
+
+  const now = new Date();
   pendingCapture = {
-    dataUrl: canvas.toDataURL('image/jpeg', 0.85),
-    ts, coordStr, species: speciesSel.value || 'Unspecified'
+    type: 'photo',
+    dataUrl: photoCanvas.toDataURL('image/jpeg', 0.85),
+    ts: now.toLocaleString('en-ZA', {hour12:false}),
+    coordStr: lastCoords ? `${lastCoords.lat.toFixed(5)}, ${lastCoords.lon.toFixed(5)}` : 'GPS unavailable',
+    species: speciesSel.value || 'Unspecified'
   };
   stampImg.src = pendingCapture.dataUrl;
+  stampImg.style.display = 'block';
+  stampVideo.style.display = 'none';
   reviewCard.style.display = 'block';
   reviewCard.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
+// --- Video capture ---
+const recordCanvas = document.createElement('canvas');
+const recordCtx = recordCanvas.getContext('2d');
+let drawLoopId = null;
+let mediaRecorder = null;
+let recordedChunks = [];
+let chosenMimeType = '';
+
+function pickMimeType(){
+  const candidates = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm'];
+  for(const c of candidates){
+    if(window.MediaRecorder && MediaRecorder.isTypeSupported(c)) return c;
+  }
+  return '';
+}
+function recordLoop(){
+  const w = recordCanvas.width, h = recordCanvas.height;
+  if(cameraReady && video.videoWidth){
+    recordCtx.drawImage(video, 0, 0, w, h);
+  } else {
+    drawSimulatedFrame(recordCtx, w, h);
+  }
+  drawStampBar(recordCtx, w, h);
+  drawLoopId = requestAnimationFrame(recordLoop);
+}
+
+async function startRecording(){
+  recordCanvas.width = 640;
+  recordCanvas.height = 480;
+  chosenMimeType = pickMimeType();
+  recordedChunks = [];
+
+  const stream = recordCanvas.captureStream(25);
+  mediaRecorder = new MediaRecorder(stream, chosenMimeType ? {mimeType: chosenMimeType} : undefined);
+  mediaRecorder.ondataavailable = e => { if(e.data.size > 0) recordedChunks.push(e.data); };
+  mediaRecorder.onstop = onRecordingStop;
+
+  drawLoopId = requestAnimationFrame(recordLoop);
+  mediaRecorder.start();
+
+  recDot.style.display = 'flex';
+  captureBtn.disabled = true;
+  let secondsLeft = 6;
+  captureBtn.textContent = `Recording… ${secondsLeft}s left`;
+  const countdown = setInterval(() => {
+    secondsLeft--;
+    if(secondsLeft > 0) captureBtn.textContent = `Recording… ${secondsLeft}s left`;
+    else clearInterval(countdown);
+  }, 1000);
+
+  setTimeout(() => {
+    if(mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+  }, 6000);
+}
+
+function onRecordingStop(){
+  cancelAnimationFrame(drawLoopId);
+  recDot.style.display = 'none';
+  captureBtn.disabled = false;
+  captureBtn.innerHTML = captureBtnVideoHTML;
+
+  const blob = new Blob(recordedChunks, {type: chosenMimeType || 'video/webm'});
+  const reader = new FileReader();
+  reader.onloadend = () => {
+    const now = new Date();
+    pendingCapture = {
+      type: 'video',
+      dataUrl: reader.result,
+      mimeType: chosenMimeType || 'video/webm',
+      ts: now.toLocaleString('en-ZA', {hour12:false}),
+      coordStr: lastCoords ? `${lastCoords.lat.toFixed(5)}, ${lastCoords.lon.toFixed(5)}` : 'GPS unavailable',
+      species: speciesSel.value || 'Unspecified'
+    };
+    stampVideo.src = pendingCapture.dataUrl;
+    stampVideo.style.display = 'block';
+    stampImg.style.display = 'none';
+    reviewCard.style.display = 'block';
+    reviewCard.scrollIntoView({behavior:'smooth', block:'nearest'});
+  };
+  reader.readAsDataURL(blob);
+}
+
+// --- Wire up capture button to whichever mode is active ---
 captureBtn.addEventListener('click', () => {
   if(!speciesSel.value){
     speciesSel.style.outline = '2px solid #E8622C';
@@ -410,11 +579,14 @@ captureBtn.addEventListener('click', () => {
     return;
   }
   speciesSel.style.outline = 'none';
-  stampAndStore();
+  if(captureMode === 'video') startRecording();
+  else stampAndStorePhoto();
 });
 
 document.getElementById('retakeBtn').addEventListener('click', () => {
   reviewCard.style.display = 'none';
+  stampImg.src = '';
+  stampVideo.src = '';
   pendingCapture = null;
 });
 
@@ -423,7 +595,7 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
 
   const payload = {
     catch_id: crypto.randomUUID(),
-    angler_id: document.getElementById('anglerInput').value || 'unknown',
+    angler_id: document.getElementById('anglerSelect').value || 'unknown',
     beat: document.getElementById('beatInput').value || '',
     sector: document.getElementById('sectorInput').value || '',
     session: document.getElementById('sessionInput').value || '',
@@ -432,20 +604,26 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     lon: lastCoords ? lastCoords.lon : '',
     species: pendingCapture.species,
     session_code: sessionCode,
-    photo: pendingCapture.dataUrl
+    media_type: pendingCapture.type
   };
+  if(pendingCapture.type === 'video'){
+    payload.video = pendingCapture.dataUrl;
+    payload.video_mime = pendingCapture.mimeType;
+  } else {
+    payload.photo = pendingCapture.dataUrl;
+  }
 
   const ok = navigator.onLine ? await sendCatch(payload) : false;
   if(!ok){
-    const q = getQueue();
-    q.push(payload);
-    saveQueue(q);
+    await queueAdd(payload);
     updateQueueBadge();
   }
 
   catches.unshift(pendingCapture);
   renderLog();
   reviewCard.style.display = 'none';
+  stampImg.src = '';
+  stampVideo.src = '';
   pendingCapture = null;
   speciesSel.value = '';
 });
@@ -458,7 +636,7 @@ function renderLog(){
   }
   logList.innerHTML = catches.map(c => `
     <div class="log-item">
-      <div class="thumb"><img src="${c.dataUrl}" alt=""></div>
+      <div class="thumb">${c.type === 'photo' ? `<img src="${c.dataUrl}" alt="">` : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M8 5v14l11-7L8 5Z" fill="#5C8A5A"/></svg>'}</div>
       <div class="log-info">
         <div class="sp">${c.species}</div>
         <div class="sub">${c.ts}<br>${c.coordStr}</div>
@@ -467,7 +645,8 @@ function renderLog(){
     </div>
   `).join('');
 }
-  updateQueueBadge();
+
+updateQueueBadge();
 </script>
 </body>
 </html>
