@@ -55,6 +55,8 @@
   .chip b{color:var(--reed);font-weight:600;}
   .chip.code{border-color:var(--flag-orange);color:var(--flag-orange);}
   .chip.code b{color:var(--flag-orange);}
+  .chip.count{border-color:var(--reed);}
+  .chip.count b{color:var(--reed);}
 
   main{position:relative;z-index:1;padding:18px 20px;}
 
@@ -196,10 +198,11 @@
     <div class="brand">CGFFU &middot; Digital Marshal</div>
     <h1>Log a catch</h1>
     <div class="meta-row">
-      <div class="chip">Beat <b>7</b></div>
-      <div class="chip">Sector <b>C</b></div>
-      <div class="chip">Session <b>2</b></div>
+      <div class="chip">Beat <b id="metaBeat">–</b></div>
+      <div class="chip">Sector <b id="metaSector">–</b></div>
+      <div class="chip">Session <b id="metaSession">–</b></div>
       <div class="chip code">Card code <b id="sessionCode">–</b></div>
+      <div class="chip count">Fish <b id="metaCount">0</b></div>
       <div class="chip" id="queueBadge" style="display:none;border-color:#E8622C;color:#E8622C;"></div>
     </div>
   </header>
@@ -209,12 +212,39 @@
       <h2>Session setup</h2>
       <label>Angler</label>
       <select id="anglerSelect" class="field"></select>
-      <label>Beat</label>
-      <input type="text" id="beatInput" class="field" placeholder="e.g. 7">
-      <label>Sector</label>
-      <input type="text" id="sectorInput" class="field" placeholder="e.g. C">
+
       <label>Session</label>
-      <input type="text" id="sessionInput" class="field" style="margin-bottom:0;" placeholder="e.g. 2">
+      <select id="sessionInput" class="field">
+        <option value="">Select session…</option>
+        <option value="1">Session 1</option>
+        <option value="2">Session 2</option>
+        <option value="3">Session 3</option>
+      </select>
+
+      <label>Sector</label>
+      <select id="sectorInput" class="field">
+        <option value="">Select sector…</option>
+        <option value="1">Sector 1</option>
+        <option value="2">Sector 2</option>
+        <option value="3">Sector 3</option>
+      </select>
+
+      <label>Beat</label>
+      <select id="beatInput" class="field" style="margin-bottom:0;">
+        <option value="">Select beat…</option>
+        <option value="1">Beat 1</option>
+        <option value="2">Beat 2</option>
+        <option value="3">Beat 3</option>
+        <option value="4">Beat 4</option>
+        <option value="5">Beat 5</option>
+        <option value="6">Beat 6</option>
+        <option value="7">Beat 7</option>
+        <option value="8">Beat 8</option>
+        <option value="9">Beat 9</option>
+        <option value="10">Beat 10</option>
+        <option value="11">Beat 11</option>
+        <option value="12">Beat 12</option>
+      </select>
     </div>
 
     <div class="card">
@@ -272,15 +302,10 @@
 const sessionCode = Array.from({length:5}, () => "23456789ACDEFGHJKMNPQRTUVWXY"[Math.floor(Math.random()*28)]).join('');
 document.getElementById('sessionCode').textContent = sessionCode;
 
-// --- Angler list. Edit these names per event, or later swap this for a
-// fetch() call that pulls the day's field straight from the draw engine's
-// exported JSON — the rest of the app doesn't need to change either way. ---
+// Edit this list of names per event
 const ANGLER_NAMES = [
   "Luke Moerdyk",
-  "Gary Cloete",
-  "Tamir Sacks",
-  "Simon Bromfield",
-  "Brett van Rensburg",
+  "Jeff Afrait",
   "Add angler names here"
 ];
 
@@ -288,14 +313,24 @@ const anglerSelect = document.getElementById('anglerSelect');
 anglerSelect.innerHTML = '<option value="">Select angler…</option>' +
   ANGLER_NAMES.map(n => `<option value="${n}">${n}</option>`).join('');
 
+const sessionSelect = document.getElementById('sessionInput');
+const sectorSelect = document.getElementById('sectorInput');
+const beatSelect = document.getElementById('beatInput');
+
+function updateHeaderMeta(){
+  document.getElementById('metaBeat').textContent = beatSelect.value || '–';
+  document.getElementById('metaSector').textContent = sectorSelect.value || '–';
+  document.getElementById('metaSession').textContent = sessionSelect.value || '–';
+}
+
 // Remember the setup fields on this phone, so they survive closing the tab
-['anglerSelect','beatInput','sectorInput','sessionInput'].forEach(id => {
+['anglerSelect','sessionInput','sectorInput','beatInput'].forEach(id => {
   const el = document.getElementById(id);
   const saved = localStorage.getItem(id);
   if(saved) el.value = saved;
-  el.addEventListener('input', () => localStorage.setItem(id, el.value));
-  el.addEventListener('change', () => localStorage.setItem(id, el.value));
+  el.addEventListener('change', () => { localStorage.setItem(id, el.value); updateHeaderMeta(); });
 });
+updateHeaderMeta();
 
 const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyj90jC-SQ-GGKEyNoM2js0ZMl1UutKZvH3q6y-Y3W7cecV8JTDltSDFHUHF6m0QoFT/exec';
 
@@ -574,7 +609,6 @@ function onRecordingStop(){
   reader.readAsDataURL(blob);
 }
 
-// --- Wire up capture button to whichever mode is active ---
 captureBtn.addEventListener('click', () => {
   if(!speciesSel.value){
     speciesSel.style.outline = '2px solid #E8622C';
@@ -598,10 +632,10 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
 
   const payload = {
     catch_id: crypto.randomUUID(),
-    angler_id: document.getElementById('anglerSelect').value || 'unknown',
-    beat: document.getElementById('beatInput').value || '',
-    sector: document.getElementById('sectorInput').value || '',
-    session: document.getElementById('sessionInput').value || '',
+    angler_id: anglerSelect.value || 'unknown',
+    beat: beatSelect.value || '',
+    sector: sectorSelect.value || '',
+    session: sessionSelect.value || '',
     timestamp: pendingCapture.ts,
     lat: lastCoords ? lastCoords.lat : '',
     lon: lastCoords ? lastCoords.lon : '',
@@ -633,6 +667,7 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
 
 function renderLog(){
   logCount.textContent = `${catches.length} catch${catches.length===1?'':'es'}`;
+  document.getElementById('metaCount').textContent = catches.length;
   if(catches.length === 0){
     logList.innerHTML = '<div class="empty">No catches logged yet this session.</div>';
     return;
